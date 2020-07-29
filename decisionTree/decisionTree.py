@@ -1,5 +1,8 @@
 import numpy as np
 import operator
+import treePloter
+import pickle
+
 
 #  test
 def createDataSet():
@@ -34,8 +37,7 @@ def calcShannonEnt(dataSet):  # 计算香农熵
     shannonEnt = 0.0
 
     for key in labelCounts:
-
-        prob = float(labelCounts[key])/numEntries
+        prob = float(labelCounts[key]) / numEntries
 
         shannonEnt -= prob * np.log2(prob)
 
@@ -49,10 +51,9 @@ def splitDataSet(dataSet, axis, value):  # 划分数据集
 
     for featureVector in dataSet:
         if featureVector[axis] == value:
-
             reducedFeatVc = featureVector[:axis]
 
-            reducedFeatVc.extend(featureVector[axis+1:])
+            reducedFeatVc.extend(featureVector[axis + 1:])
 
             returnDataSet.append(reducedFeatVc)
 
@@ -77,10 +78,9 @@ def chooseBestFeatureToSplit(dataSet):  # 选择最好的划分方式
         newEntropy = 0.0
 
         for value in uniqueVals:
-
             subDataSet = splitDataSet(dataSet, i, value)
 
-            prob = len(subDataSet)/float(len(dataSet))
+            prob = len(subDataSet) / float(len(dataSet))
 
             newEntropy += prob * calcShannonEnt(subDataSet)  # shannon ent
 
@@ -104,27 +104,77 @@ def majorityCnt(classList):  # 递归创建决策树
 
         sortedClassCount = sorted(classCount.items(), key=operator.itemgetter(1), reverse=True)  # 与kNN排序代码类似，见kNN.py
 
-        return  sortedClassCount[0][0]
+        return sortedClassCount[0][0]
 
 
 def createTree(dataSet, labels):
-
     classList = [example[-1] for example in dataSet]
 
     if classList.count(classList[0]) == len(classList):
         return classList[0]  # 类别完全相同：停止划分
 
     if len(dataSet[0]) == 1:
-        return majorityCnt(classList)  # 遍历完所有特征：返回出现次数最多的类别
+        return majorityCnt(classList)  # 遍历完所有特征,仍然无法将剩余数据集划分为唯一一类：返回出现次数最多的类别
 
-    best
+    bestFeat = chooseBestFeatureToSplit(dataSet)
+
+    bestFeatLabel = labels[bestFeat]
+
+    myTree = {bestFeatLabel: {}}
+
+    del labels[bestFeat]
+
+    featValues = [example[bestFeat] for example in dataSet]
+
+    uniqueVals = set(featValues)
+
+    for value in uniqueVals:  # 遍历当前所有属性值，递归调用，返回嵌套字典
+        subLabels = labels[:]
+        myTree[bestFeatLabel][value] = createTree(splitDataSet(dataSet, bestFeat, value), subLabels)
+
+    return myTree
+
+
+def classify(inputTree, featLabels, testVec):
+
+    firstStr = list(inputTree)[0]
+    secondDict = inputTree[firstStr]
+    featIndex = featLabels.index(firstStr)
+    key = testVec[featIndex]
+    valueOfFeat = secondDict[key]
+
+    if isinstance(valueOfFeat, dict):
+        classLabel = classify(valueOfFeat, featLabels, testVec)
+    else:
+        classLabel = valueOfFeat
+
+    return classLabel
+
+
+def storeTree(inputTree, filename):
+
+    fw = open(filename, 'wb')
+    pickle.dump(inputTree, fw)
+    fw.close()
+
+
+def grabTree(filename):
+    fr = open(filename, 'rb')
+    return pickle.load(fr)
+
 
 # test area
-myData, myLabs = createDataSet()
-print(myData)
-print(myLabs)
 
-print(splitDataSet(myData, 0, 0))
-print(splitDataSet(myData, 0, 1))
-print(splitDataSet(myData, 1, 0))
-print(splitDataSet(myData, 1, 1))
+# myData, myLabs = createDataSet()
+# print(myData)
+# print(myLabs)
+
+# print(splitDataSet(myData, 0, 0))
+# print(splitDataSet(myData, 0, 1))
+# print(splitDataSet(myData, 1, 0))
+# print(splitDataSet(myData, 1, 1))
+
+mytree = treePloter.retrieveTree(0)
+testTree = {'no surfacing': {0: 'no', 1: {'flippers': {0: 'no', 1: 'yes'}}}}
+print(testTree)
+treePloter.createPlot(mytree)
