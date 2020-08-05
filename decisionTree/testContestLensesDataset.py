@@ -10,8 +10,8 @@ for line in fr.readlines():  # turn to list
 
 print(lenses)
 
-lensesLabels = ['age', 'prescript', 'astigmatic', 'tearRate']
-
+# lensesLabels = ['age', 'prescript', 'astigmatic', 'tearRate']
+lensesLabels = ['a', 'b', 'c', 'd']
 lensesTree = decisionTree.createTree(lenses, lensesLabels)
 
 print(lensesTree)

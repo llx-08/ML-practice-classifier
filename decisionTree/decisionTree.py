@@ -109,7 +109,7 @@ def createTree(dataSet, labels):
         return majorityCnt(classList)  # 遍历完所有特征,仍然无法将剩余数据集划分为唯一一类：返回出现次数最多的类别
 
     bestFeat = chooseBestFeatureToSplit(dataSet)
-    bestFeatLabel = labels[bestFeat]
+    bestFeatLabel = labels[bestFeat]  # Labels是该特征的名称，在树上代表根据这个特征划分
 
     myTree = {bestFeatLabel: {}}
 
