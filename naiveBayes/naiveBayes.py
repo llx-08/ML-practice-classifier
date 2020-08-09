@@ -41,7 +41,7 @@ def trainNB0_CountWordsCalculateProbability(trainMatrix, trainCatgory):
 
     numWords = len(trainMatrix[0])
 
-    pAbusive = sum(trainCatgory)/float(numTrainDocs)  # 计算侮辱类文档占总文档的多少
+    pAbusive = sum(trainCatgory) / float(numTrainDocs)  # 计算侮辱类文档占总文档的多少
 
     p0Num = np.ones(numWords)  # 每个文档对应的词矩阵
     p1Num = np.ones(numWords)
@@ -58,28 +58,59 @@ def trainNB0_CountWordsCalculateProbability(trainMatrix, trainCatgory):
             p0Num += trainMatrix[i]
             p0Denom += sum(trainMatrix[i])
 
-    p1Vect = np.log(p1Num/p1Denom)  #
-    p0Vect = np.log(p0Num/p0Denom)
+    p1Vect = np.log(p1Num / p1Denom)  #
+    p0Vect = np.log(p0Num / p0Denom)
 
     return p0Vect, p1Vect, pAbusive
 
 
-def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):h
+def classifyNB(vec2Classify, p0Vec, p1Vec, pClass1):
+    p1 = sum(vec2Classify * p1Vec) + np.log(pClass1)
+    p0 = sum(vec2Classify * p0Vec) + np.log(1 - pClass1)
 
-# test
-dataSet_words, classVec = loadDataSet()  # 训练集词矩阵，labels
-# print(dataSet_words)
-# print(classVec)
+    if p1 > p0:
+        return 1
+    else:
+        return 0
 
-vocList = createVocabList(dataSet_words)
-# print(vocList)
 
-trainMatrix = []
+def testingDB():  # test
+    listOPosts, listClasses = loadDataSet()
 
-for postinDoc in dataSet_words:
-    trainMatrix.append(setOfWords2Vec(vocList, postinDoc))
+    myVocabList = createVocabList(listOPosts)
 
-p0V, p1V, pAb = trainNB0_CountWordsCalculateProbability(trainMatrix, classVec)
-print(p0V)
-print(p1V)
-# print(pAb)
+    trainMatrix = []
+
+    for postinDoc in listOPosts:
+        trainMatrix.append(setOfWords2Vec(myVocabList, postinDoc))
+
+    p0V, p1V, pAb = trainNB0_CountWordsCalculateProbability(np.array(trainMatrix), np.array(listClasses))
+
+    testEntry = ['love', 'my', 'dalmation']
+
+    thisDoc = np.array(setOfWords2Vec(myVocabList, testEntry))
+
+    print(testEntry, end="")
+    print("classified as: ", end="")
+    print(classifyNB(thisDoc, p0V, p1V, pAb))
+
+    testEntry = ["stupid", "garbage"]
+
+    thisDoc = np.array(setOfWords2Vec(myVocabList, testEntry))
+
+    print(testEntry, end="")
+    print("classified as: ", end="")
+    print(classifyNB(thisDoc, p0V, p1V, pAb))
+
+
+def bagOfWords2VecMN(vocabList, inputSet):  # 计数 instead of 置1
+
+    returnVec = [0] * len(vocabList)
+
+    for words in inputSet:
+        if words in vocabList:
+            returnVec[vocabList.index(words)] += 1
+
+    return returnVec
+
+
